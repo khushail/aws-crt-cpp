@@ -173,12 +173,14 @@ namespace Aws
             /**
              * Type signature of the callback invoked when a Publish Complete
              */
-            using OnPublishCompletionHandler = std::function<void(Mqtt5Client &, int, std::shared_ptr<PublishResult>&)>;
+            using OnPublishCompletionHandler =
+                std::function<void(Mqtt5Client &, int, std::shared_ptr<PublishResult> &)>;
 
             /**
              * Type signature of the callback invoked when a Subscribe Complete
              */
-            using OnSubscribeCompletionHandler = std::function<void(Mqtt5Client &, int, std::shared_ptr<SubAckPacket>&)>;
+            using OnSubscribeCompletionHandler =
+                std::function<void(Mqtt5Client &, int, std::shared_ptr<SubAckPacket> &)>;
 
             /**
              * Type signature of the callback invoked when a Unsubscribe Complete
@@ -308,6 +310,20 @@ namespace Aws
                     std::shared_ptr<UnsubscribePacket> unsubscribeOptions,
                     OnUnsubscribeCompletionHandler onUnsubscribeCompletionCallback = NULL) noexcept;
 
+                /*
+                 * Tell the client to release the native client and clean up unhandled the resources
+                 * and operations before destory the client. You MUST only call this function when you
+                 * want to destory the client.
+                 * This is "an ugly and unfortunate necessity" before releasing the Mqtt5Client. And You
+                 * MUST call this function to avoid any future memory leaks or dead lock.
+                 *
+                 * IMPORTANT: After the function get invoked, the Mqtt5Client will become invalid. DO
+                 * NOT call the function unless you plan to destory the client. If you would like to
+                 * reuse the client, please checkout `Start()` and `Stop()`.
+                 *
+                 */
+                void Close() noexcept;
+
                 /**
                  * Get the statistics about the current state of the client's queue of operations
                  *
@@ -387,6 +403,9 @@ namespace Aws
                 std::condition_variable m_terminationCondition;
                 std::mutex m_terminationMutex;
                 bool m_terminationPredicate = false;
+                // The self reference is used to keep the Mqtt5Client alive until the underlying
+                // m_client get terminated.
+                std::shared_ptr<Mqtt5Client> m_selfReference;
             };
 
             /**
