@@ -510,19 +510,9 @@ static int s_AwsMqtt5CanaryOperationPublish(
     Mqtt5::QOS qos,
     Allocator *allocator)
 {
-    uint16_t up_size = (rand() % UINT16_MAX) / 2 + 1;
-    char up_data[AWS_MQTT5_CANARY_PAYLOAD_SIZE_MAX];
-    AWS_ZERO_STRUCT(up_data);
-    size_t i = 0;
-    for (i = 0 ; i < up_size; i++)
-    {
-        up_data[i] = rand() % 128 + 1;
-    }
-    up_data[i] = 0;
-
-    Mqtt5::UserProperty up1("property1", up_data);
-    Mqtt5::UserProperty up2("property2", up_data);
-    Mqtt5::UserProperty up3("property3", up_data);
+    Mqtt5::UserProperty up1("property1", "value1");
+    Mqtt5::UserProperty up2("property2", "value2");
+    Mqtt5::UserProperty up3("property3", "value3");
 
     uint16_t payload_size = 1;
     uint8_t payload_data[AWS_MQTT5_CANARY_PAYLOAD_SIZE_MAX];
@@ -973,11 +963,9 @@ int main(int argc, char **argv)
 
     for (auto client : clients)
     {
-        awsMqtt5CanaryOperationFn *operation_fn =
-            s_AwsMqtt5CanaryOperationTable.operationByOperationType[AWS_MQTT5_CANARY_OPERATION_STOP];
-        if ((*operation_fn)(&client, appCtx.allocator) == AWS_OP_ERR)
+        if (client.client)
         {
-            AWS_LOGF_ERROR(AWS_LS_MQTT5_CANARY, "ID:%s STOP Operation Failed.", client.clientId.c_str());
+            client.client->Close();
         }
     }
 
